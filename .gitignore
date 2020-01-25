@@ -1,0 +1,5 @@
+.stack-work/
+pr-notifier.cabal
+*~
+.DS_Store
+bitbucket-response.json

@@ -1,0 +1,18 @@
+** Query for repl
+prs >>= \r -> return $ RIO.Prelude.filter (\x -> RIO.Prelude.elem (T.unpack (authorName (pullRequestAuthor x))) podContra && pullRequestIsOpen x ) $ bbRespPullRequests r
+
+** Show alert
+notification =
+  callCommand (
+  "osascript -e 'set alertReply to display alert \"New PR to Review\" message \""
+  <> message
+  <> "\" buttons [\"Cancel\", \"Open\"] default button 2 giving up after 5 \n"
+  <> "if button returned of alertReply is equal to \"Open\" then \n"
+  <> "    tell application \"Google Chrome\" \n"
+  <> "        activate \n"
+  <> "        tell front window to make new tab at after (get active tab) with properties {URL:\"" <> url <> "\"} \n"
+  <> "    end tell \n"
+  <> "end if'"
+  )
+
+  -- callCommand "osascript -e 'display notification \"Hi Narley Brittes\n<a href=\'https://google.com\'>Google</a>\" with title \"Hey Mate!\" with buttons [\"Cancel\"]'"
