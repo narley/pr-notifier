@@ -1,19 +1,20 @@
-{-# Language NoImplicitPrelude #-}
-{-# Language OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
-import Bitbucket.Utils (prsNotAprovedByDeveloper, createUrlOptions)
-import AppleScript.AppleScript (chooseFromList)
-import RIO.Prelude
-import RIO.Prelude.Types
-import RIO.List as RL
-import System.Process
+import           AppleScript.AppleScript (chooseFromList)
+import           Bitbucket.Utils         (createUrlOptions,
+                                          prsNotAprovedByDeveloper)
+import           RIO.List                as RL
+import           RIO.Prelude
+import           RIO.Prelude.Types
+import           System.Process
 
 main :: IO ()
 main = do
-  prs <- prsNotAprovedByDeveloper ["nbrittes", "rdean", "abowden", "mrehman"] "nbrittes"
-  if (RL.length prs > 0) then
+  prs <- prsNotAprovedByDeveloper ["user1", "user2", "user3", "user4"] "user1"
+  if RL.length prs > 0 then
     chooseFromList . createUrlOptions $ prs
   else
     callCommand ("echo \"Yeah! Nothing to approve! Time to drink some water!\"")

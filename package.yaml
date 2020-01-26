@@ -33,6 +33,8 @@ dependencies:
 - directory
 - strict-io
 - deepseq
+- split
+- hashmap
 
 library:
   source-dirs: src

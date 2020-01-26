@@ -1,17 +1,17 @@
-{-# Language NoImplicitPrelude #-}
-{-# Language OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Bitbucket.Types where
 
-import RIO.Prelude
-import RIO.Prelude.Types
-import qualified RIO.Text as T
-import qualified RIO.List as RL
-import qualified Data.Aeson as AE
-import qualified Data.Aeson.Types as AE
+import qualified Data.Aeson        as AE
+import qualified Data.Aeson.Types  as AE
+import qualified RIO.List          as RL
+import           RIO.Prelude
+import           RIO.Prelude.Types
+import qualified RIO.Text          as T
 
 
-type PodMembers = [String]
+type Team = [String]
 
 (.->) :: AE.FromJSON a => AE.Parser AE.Object -> Text -> AE.Parser a
 (.->) parser key = do
@@ -19,13 +19,14 @@ type PodMembers = [String]
   obj AE..: key
 
 baseURL :: String
-baseURL = "https://git.impello.co.uk/rest/api/1.0/dashboard/pull-requests"
+-- baseURL = "https://git.impello.co.uk/rest/api/1.0/dashboard/pull-requests"
+baseURL = "http://localhost:8080/rest/api/1.0/dashboard/pull-requests"
 
 
 type PullRequests = [PullRequest]
 
 data BBResp = BBResp
-  { bbRespSize :: Integer
+  { bbRespSize         :: Integer
   , bbRespPullRequests :: PullRequests
   }
   deriving (Show, Eq)
@@ -40,7 +41,7 @@ instance AE.FromJSON BBResp where
 
 data Author = Author
   { authorDisplayName :: Text
-  , authorName :: Text
+  , authorName        :: Text
   }
   deriving (Show, Eq)
 
@@ -83,7 +84,7 @@ instance AE.FromJSON RepoLink where
 
 data ReviewerUser = ReviewerUser
   { reviewerUserName :: Text
-  , reviewerName :: Text
+  , reviewerName     :: Text
   }
   deriving (Show, Eq)
 
@@ -97,7 +98,7 @@ instance AE.FromJSON ReviewerUser where
 
 data Reviewer = Reviewer
   { reviewerPRApproved :: Bool
-  , reviewerUser :: ReviewerUser
+  , reviewerUser       :: ReviewerUser
   }
   deriving (Show, Eq)
 
@@ -110,12 +111,12 @@ instance AE.FromJSON Reviewer where
 
 
 data PullRequest = PullRequest
-  { pullRequestTitle :: Text
-  , pullRequestLinks :: Links
-  , pullRequestAuthor :: Author
+  { pullRequestTitle     :: Text
+  , pullRequestLinks     :: Links
+  , pullRequestAuthor    :: Author
   , pullRequestReviewers :: [Reviewer]
-  , pullRequestIsOpen :: Bool
-  , pullRequestState :: Text
+  , pullRequestIsOpen    :: Bool
+  , pullRequestState     :: Text
   }
   deriving (Show, Eq)
 
