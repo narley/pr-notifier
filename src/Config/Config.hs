@@ -2,61 +2,81 @@
 
 module Config.Config where
 
-import           Control.DeepSeq          as DS
-import           Control.Exception
--- import           Data.HashMap             (fromList, lookup)
 import           Config.Types
 import           Data.List                (head, last, map)
 import           Data.List.Split
 import qualified Data.Text                as T
 import           RIO
+import           RIO.List                 as RL
 import           System.Console.Haskeline
 import           System.Directory
-import           System.IO
-import qualified System.IO.Strict         as IOS
+
 
 listPairToTuplePair :: [[String]] -> [(Text, String)]
-listPairToTuplePair xss =
-  map (\xs -> (T.pack $ head xs, last xs)) xss
+listPairToTuplePair =
+  map (\xs -> (T.pack $ head xs, last xs))
 
 makeListPair :: [String] -> [[String]]
-makeListPair xs = map (splitOn "=") xs
+makeListPair = map (splitOn "=")
 
 configFilePath :: IO FilePath
 configFilePath = do
   homeDir <- getUserDocumentsDirectory
   return $ homeDir <> "/.pr-notifier"
 
-getUserConfig :: IO ()
-getUserConfig = runInputT defaultSettings $ do
+trim :: String -> String
+trim = T.unpack . T.strip . T.pack
+
+
+setUserConfig :: IO Config
+setUserConfig = runInputT defaultSettings $ do
   outputStrLn "Let's config this app, shall we?"
-  username <- getInputLine "Bitbucket username: "
-  password <- getPassword (Just '*') "Bitbucket password: "
-  podMembers <- getInputLine "Pod member (pod members username separated by space): "
-  notificationInterval <- getInputLine "Notification interval (in seconds): "
-  outputStrLn "foooo"
+  maybeUsername <- getInputLine "Bitbucket username: "
+  maybePassword <- getPassword (Just '*') "Bitbucket password: "
+  maybeTeam <- getInputLine "Team (team members username separated by comma): "
+  maybeInterval <- getInputLine "Notification interval (in seconds): "
+  return $
+    Config
+      (maybe "" T.pack maybeUsername)
+      (maybe "" T.pack maybePassword)
+      (maybe [] (map trim . splitOn ",") maybeTeam)
+      (maybe 300 (\x -> fromMaybe 300 (readMaybe x)) maybeInterval)
+
+
+createFile :: Config -> IO ()
+createFile (Config username password team interval) = do
+  let config =
+        "USERNAME=" <> T.unpack username <> "\n"
+        <> "PASSWORD=" <> T.unpack password <> "\n"
+        <> "TEAM=" <> (RL.intercalate [','] team) <> "\n"
+        <> "INTERVAL=" <> (show interval) <> "\n"
+  filePath <- configFilePath
+  writeFile filePath config
+
+
 
 loadConfig :: IO Config
 loadConfig = do
   filePath <- configFilePath
   content <- readFile filePath
   let configPairs = listPairToTuplePair . makeListPair . lines $ content
-  let username = maybe "" (T.pack) $ lookup ("USERNAME") configPairs
-  let password = maybe "" (T.pack) $ lookup ("PASSWORD") configPairs
-  let team = maybe [] (splitOn ",") $ lookup ("TEAM") configPairs
-  let interval = case lookup ("INTERVAL") $ configPairs of
-        Just x -> fromMaybe 500 $ readMaybe x
+  let username = maybe "" T.pack $ lookup "USERNAME" configPairs
+  let password = maybe "" T.pack $ lookup "PASSWORD" configPairs
+  let team = maybe [] (splitOn ",") $ lookup "TEAM" configPairs
+  let interval = case lookup "INTERVAL" configPairs of
+        Just x  -> fromMaybe 500 $ readMaybe x
         Nothing -> 500
   return $ Config username password team interval
 
-checkFile :: IO String
-checkFile = do
+setUp :: IO ()
+setUp = do
   filePath <- configFilePath
   configExist <- doesFileExist filePath
   if configExist then
-    do
-      config <- loadConfig
-      return $ show config
+    return ()
   else
-    -- createFile
-    return $ show (Config "" "" [] 0)
+    do
+      config' <- setUserConfig
+      createFile config'
+      putStrLn $ "All done! You will be notified about your team's PR every "
+        <> show (configInterval config') <> " seconds."
