@@ -32,7 +32,8 @@ getUserConfig = runInputT defaultSettings $ do
   outputStrLn "Let's config this app, shall we?"
   username <- getInputLine "Bitbucket username: "
   password <- getPassword (Just '*') "Bitbucket password: "
-  podMembers <- getInputLine "Pod member (pod members username separated by space) :"
+  podMembers <- getInputLine "Pod member (pod members username separated by space): "
+  notificationInterval <- getInputLine "Notification interval (in seconds): "
   outputStrLn "foooo"
 
 loadConfig :: IO Config
@@ -43,7 +44,10 @@ loadConfig = do
   let username = maybe "" (T.pack) $ lookup ("USERNAME") configPairs
   let password = maybe "" (T.pack) $ lookup ("PASSWORD") configPairs
   let team = maybe [] (splitOn ",") $ lookup ("TEAM") configPairs
-  return $ Config username password team
+  let interval = case lookup ("INTERVAL") $ configPairs of
+        Just x -> fromMaybe 500 $ readMaybe x
+        Nothing -> 500
+  return $ Config username password team interval
 
 checkFile :: IO String
 checkFile = do
@@ -54,4 +58,5 @@ checkFile = do
       config <- loadConfig
       return $ show config
   else
-    createFile
+    -- createFile
+    return $ show (Config "" "" [] 0)

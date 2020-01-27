@@ -16,3 +16,29 @@ notification =
   )
 
   -- callCommand "osascript -e 'display notification \"Hi Narley Brittes\n<a href=\'https://google.com\'>Google</a>\" with title \"Hey Mate!\" with buttons [\"Cancel\"]'"
+
+** Launchd setup
+   - create: file `uk.co.shellenergy.contra.pr-notifier` under `Library/LaunchDaemons`
+     Note: has to be created with `sudo`
+
+   - with content:
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+    <dict>
+        <key>Label</key>
+        <string>uk.co.shellenergy.contra.pr-notifier</string>
+        <key>ProgramArguments</key>
+        <array>
+          <string>/Users/nbrittes/.local/bin/pr-notifier</string>
+        </array>
+        <key>StartInterval</key>
+        <integer>60</integer>
+    </dict>
+    </plist>
+
+   - enable the config:
+     launchctl load -w /Library/LaunchDaemons/uk.co.shellenergy.contra.pr-notifier.plist
+
+   - disable the config:
+     launchctl unload -w /Library/LaunchDaemons/uk.co.shellenergy.contra.pr-notifier.plist
