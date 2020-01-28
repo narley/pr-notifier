@@ -18,10 +18,6 @@ type Team = [String]
   obj <- parser
   obj AE..: key
 
-baseURL :: String
--- baseURL = "https://git.impello.co.uk/rest/api/1.0/dashboard/pull-requests"
-baseURL = "http://localhost:8080/rest/api/1.0/dashboard/pull-requests"
-
 
 type PullRequests = [PullRequest]
 

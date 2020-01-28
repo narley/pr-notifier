@@ -1,61 +1,114 @@
-** Query for repl
-prs >>= \r -> return $ RIO.Prelude.filter (\x -> RIO.Prelude.elem (T.unpack (authorName (pullRequestAuthor x))) podContra && pullRequestIsOpen x ) $ bbRespPullRequests r
+* Query for repl
+  - prs >>= \r -> return $ RIO.Prelude.filter (\x -> RIO.Prelude.elem (T.unpack (authorName (pullRequestAuthor x))) podContra && pullRequestIsOpen x ) $ bbRespPullRequests r
 
-** Show alert
-notification =
-  callCommand (
-  "osascript -e 'set alertReply to display alert \"New PR to Review\" message \""
-  <> message
-  <> "\" buttons [\"Cancel\", \"Open\"] default button 2 giving up after 5 \n"
-  <> "if button returned of alertReply is equal to \"Open\" then \n"
-  <> "    tell application \"Google Chrome\" \n"
-  <> "        activate \n"
-  <> "        tell front window to make new tab at after (get active tab) with properties {URL:\"" <> url <> "\"} \n"
-  <> "    end tell \n"
-  <> "end if'"
-  )
+* Show alert
+  notification =
+    callCommand (
+    "osascript -e 'set alertReply to display alert \"New PR to Review\" message \""
+    <> message
+    <> "\" buttons [\"Cancel\", \"Open\"] default button 2 giving up after 5 \n"
+    <> "if button returned of alertReply is equal to \"Open\" then \n"
+    <> "    tell application \"Google Chrome\" \n"
+    <> "        activate \n"
+    <> "        tell front window to make new tab at after (get active tab) with properties {URL:\"" <> url <> "\"} \n"
+    <> "    end tell \n"
+    <> "end if'"
+    )
 
   -- callCommand "osascript -e 'display notification \"Hi Narley Brittes\n<a href=\'https://google.com\'>Google</a>\" with title \"Hey Mate!\" with buttons [\"Cancel\"]'"
 
-** Launchd setup
-   - create: file `uk.co.shellenergy.contra.pr-notifier` under `Library/LaunchDaemons`
-     Note: has to be created with `sudo`
+* Launchd setup
+  - create: file `uk.co.shellenergy.contra.pr-notifier` under `Library/LaunchDaemons`
+    Note: has to be created with `sudo`
 
-   - with content:
-    <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-    <plist version="1.0">
-    <dict>
-        <key>Label</key>
-        <string>uk.co.shellenergy.contra.pr-notifier</string>
-        <key>ProgramArguments</key>
-        <array>
-          <string>/Users/nbrittes/.local/bin/pr-notifier</string>
-        </array>
-        <key>StartInterval</key>
-        <integer>60</integer>
-    </dict>
-    </plist>
+  - with content:
+  <?xml version="1.0" encoding="UTF-8"?>
+  <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+  <plist version="1.0">
+  <dict>
+      <key>Label</key>
+      <string>uk.co.shellenergy.contra.pr-notifier</string>
+      <key>ProgramArguments</key>
+      <array>
+        <string>/Users/nbrittes/.local/bin/pr-notifier</string>
+      </array>
+      <key>StartInterval</key>
+      <integer>60</integer>
+  </dict>
+  </plist>
 
-   - enable the config:
-     launchctl load -w /Library/LaunchDaemons/uk.co.shellenergy.contra.pr-notifier.plist
+  - enable the config:
+    launchctl load -w /Library/LaunchDaemons/uk.co.shellenergy.contra.pr-notifier.plist
 
-   - disable the config:
-     launchctl unload -w /Library/LaunchDaemons/uk.co.shellenergy.contra.pr-notifier.plist
-** CLI arguments
-    -- import System.Environment
-    --     import System.Exit
+  - disable the config:
+    launchctl unload -w /Library/LaunchDaemons/uk.co.shellenergy.contra.pr-notifier.plist
 
-    --     main = getArgs >>= parse >>= putStr . tac
+* CLI arguments
+  -- import System.Environment
+  --     import System.Exit
 
-    --     tac  = unlines . reverse . lines
+  --     main = getArgs >>= parse >>= putStr . tac
 
-    --     parse ["-h"] = usage   >> exit
-    --     parse ["-v"] = version >> exit
-    --     parse []     = getContents
-    --     parse fs     = concat `fmap` mapM readFile fs
+  --     tac  = unlines . reverse . lines
 
-    --     usage   = putStrLn "Usage: tac [-vh] [file ..]"
-    --     version = putStrLn "Haskell tac 0.1"
-    --     exit    = exitWith ExitSuccess
-    --     die     = exitWith (ExitFailure 1)
+  --     parse ["-h"] = usage   >> exit
+  --     parse ["-v"] = version >> exit
+  --     parse []     = getContents
+  --     parse fs     = concat `fmap` mapM readFile fs
+
+  --     usage   = putStrLn "Usage: tac [-vh] [file ..]"
+  --     version = putStrLn "Haskell tac 0.1"
+  --     exit    = exitWith ExitSuccess
+  --     die     = exitWith (ExitFailure 1)
+
+* Flow control for `pr-notifier --run`
+  -- if config file exist then
+  --   load config
+  --   if plist file exist then
+  --      delete plist file
+  --      create and load new plist file
+  --   else
+  --      create and load new plist file
+  -- else
+  --    call `pr-notifier --setup`
+  --    if plist file exist then
+  --       delete plist file
+  --       create and load new plist file
+  --    else
+  --       create and load new plist file
+
+* Flow for plist
+
+  -- PROGRAM FLOW
+  -- pr-notifier --run
+  -- main =
+  --   if config file exist then
+  --     load config
+  --     if plist file exist then
+  --        delete plist file
+  --        create and load new plist file
+  --     else
+  --        create and load new plist file
+  --   else
+  --      call `pr-notifier --setup`
+  --      if plist file exist then
+  --         delete plist flie
+  --         create and load new plist file
+  --      else
+  --         create and load new plist file
+
+* First draft
+
+  -- main :: IO ()
+  -- main = do
+  --   -- prs <- prsNotAprovedByDeveloper ["user1", "user2", "user3", "user4"] "user1"
+  --   prs <- prsNotAprovedByDeveloper ["nbrittes", "rdean", "mrehman", "abowden"] "nbrittes"
+  --   if RL.length prs > 0 then
+  --     chooseFromList . createUrlOptions $ prs
+  --     -- callCommand ("echo \"Just testing this\"")
+  --   else
+  --     callCommand ("echo \"Yeah! Nothing to approve! Time to drink some water!\"")
+
+* Local testing
+
+  -- baseURL = "http://localhost:8080/rest/api/1.0/dashboard/pull-requests"

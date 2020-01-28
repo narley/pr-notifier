@@ -7,6 +7,7 @@ data Config = Config
   { configUsername :: RT.Text
   , configPassword :: RT.Text
   , configTeam     :: Team
+  , configReviewer :: RT.Text
   , configInterval :: Integer
   }
   deriving (Show)
